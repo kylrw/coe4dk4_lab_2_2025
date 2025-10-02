@@ -34,7 +34,7 @@ extern double PACKET_ARRIVAL_RATE; /* packets per second */
 #define RUNLENGTH 10e6 /* packets */
 
 /* Comma separated list of random seeds to run. */
-#define RANDOM_SEED_LIST 400386351
+#define RANDOM_SEED_LIST 400386351, 400393313, 222222, 444444, 666666
 
 #define PACKET_XMT_TIME ((double) PACKET_LENGTH/LINK_BIT_RATE)
 #define BLIPRATE (RUNLENGTH/1000)

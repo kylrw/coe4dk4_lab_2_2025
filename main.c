@@ -64,7 +64,7 @@ main(void)
    * Loop for each random number generator seed, doing a separate
    * simulation_run run for each.
    */
-  for(PACKET_ARRIVAL_RATE = 400; PACKET_ARRIVAL_RATE <= 1e6; PACKET_ARRIVAL_RATE *= 2) {
+  for(PACKET_ARRIVAL_RATE = 100; PACKET_ARRIVAL_RATE < 2000; PACKET_ARRIVAL_RATE += 100) {
     j = 0;
     while ((random_seed = RANDOM_SEEDS[j++]) != 0) {
 
