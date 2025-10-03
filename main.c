@@ -64,7 +64,7 @@ main(void)
    * Loop for each random number generator seed, doing a separate
    * simulation_run run for each.
    */
-  for(PACKET_ARRIVAL_RATE = 100; PACKET_ARRIVAL_RATE < 2000; PACKET_ARRIVAL_RATE += 100) {
+  for(PACKET_ARRIVAL_RATE = 380; PACKET_ARRIVAL_RATE < 500; PACKET_ARRIVAL_RATE += 1) {
     j = 0;
     while ((random_seed = RANDOM_SEEDS[j++]) != 0) {
 
@@ -85,6 +85,7 @@ main(void)
       data.number_of_packets_processed = 0;
       data.accumulated_delay = 0.0;
       data.random_seed = random_seed;
+      data.num_above20 = 0;
   
       /* 
       * Create the packet buffer and transmission link, declared in main.h.
@@ -113,6 +114,7 @@ main(void)
       while(data.number_of_packets_processed < RUNLENGTH) {
         simulation_run_execute_event(simulation_run);
       }
+
 
       /*
       * Output results and clean up after ourselves.
