@@ -64,7 +64,7 @@ main(void)
    * Loop for each random number generator seed, doing a separate
    * simulation_run run for each.
    */
-  for(PACKET_ARRIVAL_RATE = 380; PACKET_ARRIVAL_RATE < 500; PACKET_ARRIVAL_RATE += 1) {
+  for(PACKET_ARRIVAL_RATE = 100; PACKET_ARRIVAL_RATE < 2000; PACKET_ARRIVAL_RATE += 100) {
     j = 0;
     while ((random_seed = RANDOM_SEEDS[j++]) != 0) {
 
@@ -92,7 +92,8 @@ main(void)
       */
 
       data.buffer = fifoqueue_new();
-      data.link   = server_new();
+      data.link1   = server_new();
+      data.link2   = server_new();
 
       /* 
       * Set the random number generator seed for this run.
