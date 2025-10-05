@@ -40,13 +40,13 @@
 
 long int
 schedule_packet_arrival_event(Simulation_Run_Ptr simulation_run,
-			      double event_time)
+			      double event_time, void * attachment)
 {
   Event event;
 
   event.description = "Packet Arrival";
   event.function = packet_arrival_event;
-  event.attachment = (void *) NULL;
+  event.attachment = attachment;
 
   return simulation_run_schedule_event(simulation_run, event, event_time);
 }
@@ -65,38 +65,52 @@ packet_arrival_event(Simulation_Run_Ptr simulation_run, void * ptr)
 {
   Simulation_Run_Data_Ptr data;
   Packet_Ptr new_packet;
+  int source = 0; /* default source id */
 
   data = (Simulation_Run_Data_Ptr) simulation_run_data(simulation_run);
+
+  /* If an attachment was provided, it is expected to be a pointer to an int
+     containing the source id (0,1,2). Free it after reading. */
+  if (ptr != NULL) {
+    int *p = (int *) ptr;
+    source = *p;
+    xfree((void *) p);
+  }
+
+  /* Track arrival counts. */
   data->arrival_count++;
+  if (source >=0 && source < 3) data->arrival_count_per_switch[source]++;
 
   new_packet = (Packet_Ptr) xmalloc(sizeof(Packet));
   new_packet->arrive_time = simulation_run_get_time(simulation_run);
-  new_packet->service_time = get_packet_transmission_time();
   new_packet->status = WAITING;
+  new_packet->source_id = source;
+  new_packet->destination_id = -1;
 
-  /* 
-   * Start transmission if the data link is free. Otherwise put the packet into
-   * the buffer.
-   */
-
-  if(server_state(data->link1) == BUSY && server_state(data->link2) == BUSY) {
-    fifoqueue_put(data->buffer, (void*) new_packet);
-  } 
-    else if(server_state(data->link1) == FREE) {
-    start_transmission_on_link(simulation_run, new_packet, data->link1);
-  } else if(server_state(data->link2) == FREE) {
-    start_transmission_on_link(simulation_run, new_packet, data->link2);
+  /* Put packet into the appropriate switch buffer or start transmission if
+     the corresponding link is free. */
+  if (server_state(data->links[source]) == BUSY) {
+    fifoqueue_put(data->buffers[source], (void*) new_packet);
+  } else {
+    start_transmission_on_link(simulation_run, new_packet, data->links[source]);
   }
-    
 
-  /* 
-   * Schedule the next packet arrival. Independent, exponentially distributed
-   * interarrival times gives us Poisson process arrivals.
-   */
+  /* Schedule the next arrival for this same source, using its lambda. */
+  double lambda = PACKET_ARRIVAL_RATE; /* fallback */
+  if (source == 0) lambda = (double) LAMBDA1;
+  else if (source == 1) lambda = (double) LAMBDA2;
+  else if (source == 2) lambda = (double) LAMBDA3;
 
-  schedule_packet_arrival_event(simulation_run,
-			simulation_run_get_time(simulation_run) +
-			exponential_generator((double) 1/PACKET_ARRIVAL_RATE));
+  /* Schedule the next arrival for this same source. Attach the source id so
+     the future event knows which stream it belongs to. The attachment is
+     freed at the start of packet_arrival_event. */
+  {
+    int *next_src = (int *) xmalloc(sizeof(int));
+    *next_src = source;
+    schedule_packet_arrival_event(simulation_run,
+            simulation_run_get_time(simulation_run) +
+            exponential_generator((double) 1.0/lambda), (void *) next_src);
+  }
 }
 
 

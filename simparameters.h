@@ -28,16 +28,33 @@
 
 /******************************************************************************/
 
-extern double PACKET_ARRIVAL_RATE; /* packets per second */
-#define PACKET_LENGTH 500 /* bits */
-#define LINK_BIT_RATE 5e5 /* bits per second */
+#define PACKET_ARRIVAL_RATE 400 /* default packets per second (legacy) */
+
+/* --- Parameters for Experiment 5: three-switch network --- */
+/* Local arrival rates (packets/sec) for Switch 1, 2 and 3 */
+#define LAMBDA1 750 /* packets/sec for Switch 1 (experiment 5) */
+#define LAMBDA2 500 /* packets/sec for Switch 2 (fixed) */
+#define LAMBDA3 500 /* packets/sec for Switch 3 (fixed) */
+
+/* Packet length (bits) for experiment 5 */
+#define PACKET_LENGTH 1000 /* bits */
+
+/* Link bit rates (bits per second) for Link1, Link2, Link3 */
+#define LINK1_BIT_RATE 2000000.0 /* 2 Mbps */
+#define LINK2_BIT_RATE 1000000.0 /* 1 Mbps */
+#define LINK3_BIT_RATE 1000000.0 /* 1 Mbps */
+
+/* Probability that a packet transmitted on Link1 is destined for Link2.
+	p12 = 1 - p13 */
+#define P12 0.5
+
+/* --- End Experiment 5 parameters --- */
 #define RUNLENGTH 10e6 /* packets */
 
 /* Comma separated list of random seeds to run. */
-#define RANDOM_SEED_LIST 400386351, 400393313, 222222, 444444, 666666
-/* , 400393313, 222222, 444444, 666666 */
+#define RANDOM_SEED_LIST 400386351
 
-#define PACKET_XMT_TIME ((double) PACKET_LENGTH/LINK_BIT_RATE)
+#define PACKET_XMT_TIME ((double) PACKET_LENGTH/LINK2_BIT_RATE) /* legacy */
 #define BLIPRATE (RUNLENGTH/1000)
 
 /******************************************************************************/

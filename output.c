@@ -38,7 +38,7 @@
 void
 output_progress_msg_to_screen(Simulation_Run_Ptr simulation_run)
 {
-  double percentage_done;
+  // double percentage_done;
   Simulation_Run_Data_Ptr data;
 
   data = (Simulation_Run_Data_Ptr) simulation_run_data(simulation_run);
@@ -51,13 +51,13 @@ output_progress_msg_to_screen(Simulation_Run_Ptr simulation_run)
 
     data->blip_counter = 0;
 
-    percentage_done =
-      100 * (double) data->number_of_packets_processed/RUNLENGTH;
+    // percentage_done =
+    //   100 * (double) data->number_of_packets_processed/RUNLENGTH;
 
-    printf("%3.0f%% ", percentage_done);
+    // printf("%3.0f%% ", percentage_done);
 
-    printf("Successfully Xmtted Pkts  = %ld (Arrived Pkts = %ld) \r", 
-	   data->number_of_packets_processed, data->arrival_count);
+    // printf("Successfully Xmtted Pkts  = %ld (Arrived Pkts = %ld) \r", 
+	  //  data->number_of_packets_processed, data->arrival_count);
 
     fflush(stdout);
   }
@@ -69,10 +69,10 @@ output_progress_msg_to_screen(Simulation_Run_Ptr simulation_run)
  * collected statistics on the screen.
  */
 
-void output_results(Simulation_Run_Ptr simulation_run)
+void
+output_results(Simulation_Run_Ptr simulation_run)
 {
   double xmtted_fraction;
-  float prob_above20;
   Simulation_Run_Data_Ptr data;
 
   data = (Simulation_Run_Data_Ptr) simulation_run_data(simulation_run);
@@ -80,6 +80,7 @@ void output_results(Simulation_Run_Ptr simulation_run)
   printf("\n");
   printf("Random Seed = %d \n", data->random_seed);
   printf("Packet arrival count = %ld \n", data->arrival_count);
+
   xmtted_fraction = (double) data->number_of_packets_processed /
     data->arrival_count;
 
@@ -91,12 +92,20 @@ void output_results(Simulation_Run_Ptr simulation_run)
   printf("Mean Delay (msec) = %.2f \n",
 	 1e3*data->accumulated_delay/data->number_of_packets_processed);
 
-  printf("number of packets taking above 20msec: %d\n", data->num_above20);
-  
-  prob_above20 = 100* ((double) data->num_above20/data->number_of_packets_processed);
-
-  printf("probability of packet's delay exceeds 20msec: %.3f \n", prob_above20);
-
+  /* If per-switch stats are present (experiment 5), print them. */
+  if (data->number_of_packets_processed_per_switch[0] != 0 ||
+      data->number_of_packets_processed_per_switch[1] != 0 ||
+      data->number_of_packets_processed_per_switch[2] != 0) {
+    printf("\nPer-switch results (Experiment 5):\n");
+    for (int s = 0; s < 3; s++) {
+      long processed = data->number_of_packets_processed_per_switch[s];
+      long arrived = data->arrival_count_per_switch[s];
+      double mean_delay = (processed > 0) ? 1e3*data->accumulated_delay_per_switch[s]/processed : 0.0;
+      printf(" Switch %d: Arrivals = %ld, Transmitted = %ld, Mean Delay (msec) = %.2f \n",
+             s+1, arrived, processed, mean_delay);
+    }
+    printf("\n");
+  }
   printf("\n");
 }
 
