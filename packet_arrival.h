@@ -40,7 +40,14 @@ void
 packet_arrival_event(Simulation_Run_Ptr, void*);
 
 long
-schedule_packet_arrival_event(Simulation_Run_Ptr, double, void *);
+schedule_packet_arrival_event(Simulation_Run_Ptr, double);
+
+/* Voice packet arrival functions */
+void
+voice_packet_arrival_event(Simulation_Run_Ptr, void*);
+
+long
+schedule_voice_packet_arrival_event(Simulation_Run_Ptr, double);
 
 /******************************************************************************/
 

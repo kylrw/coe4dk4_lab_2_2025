@@ -28,6 +28,9 @@
 #include "main.h"
 #include "output.h"
 
+/* External declaration for current data arrival rate */
+extern double current_data_arrival_rate;
+
 /******************************************************************************/
 
 /*
@@ -38,7 +41,7 @@
 void
 output_progress_msg_to_screen(Simulation_Run_Ptr simulation_run)
 {
-  // double percentage_done;
+  double percentage_done;
   Simulation_Run_Data_Ptr data;
 
   data = (Simulation_Run_Data_Ptr) simulation_run_data(simulation_run);
@@ -51,8 +54,8 @@ output_progress_msg_to_screen(Simulation_Run_Ptr simulation_run)
 
     data->blip_counter = 0;
 
-    // percentage_done =
-    //   100 * (double) data->number_of_packets_processed/RUNLENGTH;
+    percentage_done =
+      100 * (double) data->number_of_packets_processed/RUNLENGTH;
 
     // printf("%3.0f%% ", percentage_done);
 
@@ -79,34 +82,49 @@ output_results(Simulation_Run_Ptr simulation_run)
 
   printf("\n");
   printf("Random Seed = %d \n", data->random_seed);
-  printf("Packet arrival count = %ld \n", data->arrival_count);
+  printf("Total packet arrival count = %ld \n", data->arrival_count);
+  printf("  Voice packet arrivals = %ld \n", data->voice_arrival_count);
+  printf("  Data packet arrivals = %ld \n", data->data_arrival_count);
 
   xmtted_fraction = (double) data->number_of_packets_processed /
     data->arrival_count;
 
-  printf("Transmitted packet count  = %ld (Service Fraction = %.5f)\n",
+  printf("Total transmitted packet count = %ld (Service Fraction = %.5f)\n",
 	 data->number_of_packets_processed, xmtted_fraction);
+  printf("  Voice packets transmitted = %ld \n", data->voice_packets_processed);
+  printf("  Data packets transmitted = %ld \n", data->data_packets_processed);
 
-  printf("Arrival rate = %.3f packets/second \n", (double) PACKET_ARRIVAL_RATE);
+  printf("Data arrival rate = %.3f packets/second \n", current_data_arrival_rate);
+  printf("Voice arrival rate = %.3f packets/second \n", 1.0/VOICE_INTER_ARRIVAL_TIME);
 
-  printf("Mean Delay (msec) = %.2f \n",
+  printf("Overall Mean Delay (msec) = %.2f \n",
 	 1e3*data->accumulated_delay/data->number_of_packets_processed);
 
-  /* If per-switch stats are present (experiment 5), print them. */
-  if (data->number_of_packets_processed_per_switch[0] != 0 ||
-      data->number_of_packets_processed_per_switch[1] != 0 ||
-      data->number_of_packets_processed_per_switch[2] != 0) {
-    printf("\nPer-switch results (Experiment 5):\n");
-    for (int s = 0; s < 3; s++) {
-      long processed = data->number_of_packets_processed_per_switch[s];
-      long arrived = data->arrival_count_per_switch[s];
-      double mean_delay = (processed > 0) ? 1e3*data->accumulated_delay_per_switch[s]/processed : 0.0;
-      printf(" Switch %d: Arrivals = %ld, Transmitted = %ld, Mean Delay (msec) = %.2f \n",
-             s+1, arrived, processed, mean_delay);
-    }
-    printf("\n");
+  /* Output separate delays for voice and data if packets were processed */
+  if(data->voice_packets_processed > 0) {
+    printf("Voice Mean Delay (msec) = %.2f \n",
+	   1e3*data->voice_accumulated_delay/data->voice_packets_processed);
   }
+  
+  if(data->data_packets_processed > 0) {
+    printf("Data Mean Delay (msec) = %.2f \n",
+	   1e3*data->data_accumulated_delay/data->data_packets_processed);
+  }
+
   printf("\n");
+
+  printf("Seed,Data_Arrival_Rate,Voice_Arrival_Rate,Mean_Delay,Voice_Mean_Delay,Data_Mean_Delay\n");
+  printf("%d,%.3f,%.3f,%.2f,%.2f,%.2f",  
+    data->random_seed, 
+    current_data_arrival_rate, 
+    1.0/VOICE_INTER_ARRIVAL_TIME,
+    1e3*data->accumulated_delay/data->number_of_packets_processed,
+    1e3*data->voice_accumulated_delay/data->voice_packets_processed,
+    1e3*data->data_accumulated_delay/data->data_packets_processed);
+
+
+
+  printf("\n\n");
 }
 
 

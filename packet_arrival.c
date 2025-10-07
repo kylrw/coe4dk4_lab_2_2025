@@ -29,6 +29,9 @@
 #include "packet_transmission.h"
 #include "packet_arrival.h"
 
+/* External declaration for current data arrival rate */
+extern double current_data_arrival_rate;
+
 /******************************************************************************/
 
 /*
@@ -40,13 +43,13 @@
 
 long int
 schedule_packet_arrival_event(Simulation_Run_Ptr simulation_run,
-			      double event_time, void * attachment)
+			      double event_time)
 {
   Event event;
 
   event.description = "Packet Arrival";
   event.function = packet_arrival_event;
-  event.attachment = attachment;
+  event.attachment = (void *) NULL;
 
   return simulation_run_schedule_event(simulation_run, event, event_time);
 }
@@ -65,52 +68,94 @@ packet_arrival_event(Simulation_Run_Ptr simulation_run, void * ptr)
 {
   Simulation_Run_Data_Ptr data;
   Packet_Ptr new_packet;
-  int source = 0; /* default source id */
 
   data = (Simulation_Run_Data_Ptr) simulation_run_data(simulation_run);
-
-  /* If an attachment was provided, it is expected to be a pointer to an int
-     containing the source id (0,1,2). Free it after reading. */
-  if (ptr != NULL) {
-    int *p = (int *) ptr;
-    source = *p;
-    xfree((void *) p);
-  }
-
-  /* Track arrival counts. */
   data->arrival_count++;
-  if (source >=0 && source < 3) data->arrival_count_per_switch[source]++;
+  data->data_arrival_count++;
 
   new_packet = (Packet_Ptr) xmalloc(sizeof(Packet));
   new_packet->arrive_time = simulation_run_get_time(simulation_run);
+  new_packet->packet_type = DATA_PACKET;
+  new_packet->packet_length_bits = DATA_PACKET_LENGTH;
+  new_packet->service_time = get_packet_transmission_time(new_packet);
   new_packet->status = WAITING;
-  new_packet->source_id = source;
-  new_packet->destination_id = -1;
 
-  /* Put packet into the appropriate switch buffer or start transmission if
-     the corresponding link is free. */
-  if (server_state(data->links[source]) == BUSY) {
-    fifoqueue_put(data->buffers[source], (void*) new_packet);
+  /* 
+   * Start transmission if the data link is free. Otherwise put the packet into
+   * the buffer.
+   */
+
+  if(server_state(data->link) == BUSY) {
+    fifoqueue_put(data->buffer, (void*) new_packet);
   } else {
-    start_transmission_on_link(simulation_run, new_packet, data->links[source]);
+    start_transmission_on_link(simulation_run, new_packet, data->link);
   }
 
-  /* Schedule the next arrival for this same source, using its lambda. */
-  double lambda = PACKET_ARRIVAL_RATE; /* fallback */
-  if (source == 0) lambda = (double) LAMBDA1;
-  else if (source == 1) lambda = (double) LAMBDA2;
-  else if (source == 2) lambda = (double) LAMBDA3;
+  /* 
+   * Schedule the next packet arrival. Independent, exponentially distributed
+   * interarrival times gives us Poisson process arrivals.
+   */
 
-  /* Schedule the next arrival for this same source. Attach the source id so
-     the future event knows which stream it belongs to. The attachment is
-     freed at the start of packet_arrival_event. */
-  {
-    int *next_src = (int *) xmalloc(sizeof(int));
-    *next_src = source;
-    schedule_packet_arrival_event(simulation_run,
-            simulation_run_get_time(simulation_run) +
-            exponential_generator((double) 1.0/lambda), (void *) next_src);
+  schedule_packet_arrival_event(simulation_run,
+			simulation_run_get_time(simulation_run) +
+			exponential_generator((double) 1/current_data_arrival_rate));
+}
+
+/******************************************************************************/
+
+/*
+ * Voice packet arrival functions
+ */
+
+long int
+schedule_voice_packet_arrival_event(Simulation_Run_Ptr simulation_run,
+                                   double event_time)
+{
+  Event event;
+
+  event.description = "Voice Packet Arrival";
+  event.function = voice_packet_arrival_event;
+  event.attachment = (void *) NULL;
+
+  return simulation_run_schedule_event(simulation_run, event, event_time);
+}
+
+/******************************************************************************/
+
+void
+voice_packet_arrival_event(Simulation_Run_Ptr simulation_run, void * ptr)
+{
+  Simulation_Run_Data_Ptr data;
+  Packet_Ptr new_packet;
+
+  data = (Simulation_Run_Data_Ptr) simulation_run_data(simulation_run);
+  data->arrival_count++;
+  data->voice_arrival_count++;
+
+  new_packet = (Packet_Ptr) xmalloc(sizeof(Packet));
+  new_packet->arrive_time = simulation_run_get_time(simulation_run);
+  new_packet->packet_type = VOICE_PACKET;
+  new_packet->packet_length_bits = VOICE_PACKET_LENGTH;
+  new_packet->service_time = get_packet_transmission_time(new_packet);
+  new_packet->status = WAITING;
+
+  /* 
+   * Start transmission if the data link is free. Otherwise put the packet into
+   * the buffer.
+   */
+
+  if(server_state(data->link) == BUSY) {
+    fifoqueue_put(data->buffer, (void*) new_packet);
+  } else {
+    start_transmission_on_link(simulation_run, new_packet, data->link);
   }
+
+  /* 
+   * Schedule the next voice packet arrival. Fixed inter-arrival time for voice.
+   */
+
+  schedule_voice_packet_arrival_event(simulation_run,
+                    simulation_run_get_time(simulation_run) + VOICE_INTER_ARRIVAL_TIME);
 }
 
 

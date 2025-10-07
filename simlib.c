@@ -134,7 +134,7 @@ simulation_run_set_data (Simulation_Run_Ptr this_simulation_run, void * data)
  * This function makes an entry on the event list. It must be passed the
  * simulation_run, the type of event, and the time that the event is to occur. An
  * event_contents pointer can also be passed which can be recovered when the
- * event function is calle d. The event list itself is a double linked list.
+ * event function is called. The event list itself is a double linked list.
  */
 
 long int

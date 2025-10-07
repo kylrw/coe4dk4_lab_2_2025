@@ -28,33 +28,24 @@
 
 /******************************************************************************/
 
-#define PACKET_ARRIVAL_RATE 400 /* default packets per second (legacy) */
+#define DATA_PACKET_LENGTH 500 /* bits */
+#define LINK_BIT_RATE 1e6 /* bits per second */
+#define RUNLENGTH 1e6 /* packets */
 
-/* --- Parameters for Experiment 5: three-switch network --- */
-/* Local arrival rates (packets/sec) for Switch 1, 2 and 3 */
-#define LAMBDA1 750 /* packets/sec for Switch 1 (experiment 5) */
-#define LAMBDA2 500 /* packets/sec for Switch 2 (fixed) */
-#define LAMBDA3 500 /* packets/sec for Switch 3 (fixed) */
+/* Voice traffic parameters */
+#define VOICE_INTER_ARRIVAL_TIME 0.020 /* 20 ms */
+#define VOICE_PAYLOAD_BITS (64000 * 0.020) /* 64 Kbps * 20 ms = 1280 bits */
+#define VOICE_HEADER_BITS (62 * 8) /* 62 bytes * 8 bits/byte = 496 bits */
+#define VOICE_PACKET_LENGTH (VOICE_PAYLOAD_BITS + VOICE_HEADER_BITS) /* total bits */
 
-/* Packet length (bits) for experiment 5 */
-#define PACKET_LENGTH 1000 /* bits */
-
-/* Link bit rates (bits per second) for Link1, Link2, Link3 */
-#define LINK1_BIT_RATE 2000000.0 /* 2 Mbps */
-#define LINK2_BIT_RATE 1000000.0 /* 1 Mbps */
-#define LINK3_BIT_RATE 1000000.0 /* 1 Mbps */
-
-/* Probability that a packet transmitted on Link1 is destined for Link2.
-	p12 = 1 - p13 */
-#define P12 0.5
-
-/* --- End Experiment 5 parameters --- */
-#define RUNLENGTH 10e6 /* packets */
+/* Service time parameters */
+#define DATA_SERVICE_TIME 0.040 /* 40 ms mean service time for data packets */
 
 /* Comma separated list of random seeds to run. */
-#define RANDOM_SEED_LIST 400386351
+#define RANDOM_SEED_LIST 333333
 
-#define PACKET_XMT_TIME ((double) PACKET_LENGTH/LINK2_BIT_RATE) /* legacy */
+#define DATA_XMT_TIME ((double) DATA_PACKET_LENGTH/LINK_BIT_RATE)
+#define VOICE_XMT_TIME ((double) VOICE_PACKET_LENGTH/LINK_BIT_RATE)
 #define BLIPRATE (RUNLENGTH/1000)
 
 /******************************************************************************/

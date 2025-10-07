@@ -37,26 +37,24 @@ typedef struct _simulation_run_data_
 {
   Fifoqueue_Ptr buffer;
   Server_Ptr link;
-  /* For experiment 5, support up to 3 switches. We'll keep legacy single
-     server fields for backward compatibility and also add arrays for the
-     multi-switch experiment. */
-  Fifoqueue_Ptr buffers[3];
-  Server_Ptr links[3];
-  long int arrival_count_per_switch[3];
-  long int number_of_packets_processed_per_switch[3];
-  double accumulated_delay_per_switch[3];
   long int blip_counter;
   long int arrival_count;
   long int number_of_packets_processed;
   double accumulated_delay;
+  
+  /* Separate statistics for voice and data */
+  long int voice_arrival_count;
+  long int voice_packets_processed;
+  double voice_accumulated_delay;
+  long int data_arrival_count;
+  long int data_packets_processed;
+  double data_accumulated_delay;
+  
   unsigned random_seed;
 } Simulation_Run_Data, * Simulation_Run_Data_Ptr;
 
-/* Runtime configurable p12 used by packet_transmission to forward packets.
-  Defined in main.c as a global so the program can sweep it without recompiling. */
-extern double P12_global;
-
 typedef enum {XMTTING, WAITING} Packet_Status;
+typedef enum {DATA_PACKET, VOICE_PACKET} Packet_Type;
 
 typedef struct _packet_ 
 {
@@ -65,6 +63,8 @@ typedef struct _packet_
   int source_id;
   int destination_id;
   Packet_Status status;
+  Packet_Type packet_type;
+  double packet_length_bits;
 } Packet, * Packet_Ptr;
 
 /*
@@ -72,7 +72,12 @@ typedef struct _packet_
  */
 
 int
-main(int argc, char *argv[]);
+main(void);
+
+/*
+ * Global variable for current data arrival rate
+ */
+extern double current_data_arrival_rate;
 
 /******************************************************************************/
 
